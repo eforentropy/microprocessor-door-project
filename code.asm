@@ -1,14 +1,22 @@
+;MIKROISLEMCI DERSI KAPI KILIDI KODU
+;HAZIRLAYANLAR 
+;BÜNYAMIN UYSAL
+;ADEM KOÇ
+;KOD EMÜLATÖRDE RAHAT ANLASILABILMESI ICIN DOS OUTPUTLARLA DONATILDI
+;STANDART OPUTLARI GÖSTERMEK AMACIYLA PORT_SUCCESS PORT_FAILED VE PORT_DEFAULT GIBI METODLAR TANIMLANDI
+;CAPTCHA CEVABINI RANDOMIZE ETMEK AMACIYLA ZAMAN DAMGASI KULLANILDI
+
 .MODEL SMALL
 ORG 100H
 .DATA         
    
 WELCOME DB  "Hosgeldiniz , Pin kodu olusturmak icin lutfen 4 basamakli bir pin kodu giriniz...$" 
 SUCCESS DB  "Pin kabul edildi!  , Mevcut Pin kodunu kullanarak giris yapabilirsiniz!!!$"
-ERROR   DB  "Pin kabul edilmedi Lütfen tekrar deneyiniz...$"    
+ERROR   DB  "Pin kabul edilmedi LÃ¼tfen tekrar deneyiniz...$"    
 ENTER_PIN DB "Lutfen Pin kodunuzu giriniz=> $"
 SUCCESS_PIN DB "Pin Kabul Edildi!!!$"
-FAIL_PIN DB "Pin Kodunuz yanlis Lütfen tekrar deneyiniz...$"
-CAPTCHA_FAILED DB "Captcha islemi basarisiz oldu lütfen tekrar deneyiniz...$"
+FAIL_PIN DB "Pin Kodunuz yanlis LÃ¼tfen tekrar deneyiniz...$"
+CAPTCHA_FAILED DB "Captcha islemi basarisiz oldu lÃ¼tfen tekrar deneyiniz...$"
 CAPTCHA_SUCCESS DB "Captcha islemi basarili!! Giris yapiliyor...$"   
 PIN DB 5 DUP('$') 
 TEMP_PIN DB 5 DUP('$')  
@@ -23,6 +31,11 @@ OPERATOR DB 1 DUP (?)
 ;0=>+
 ;1=>-
 
+
+;PORT 110H is default OUTPUT
+;1 => success
+;2 => fail
+;0 => otherwise
 
 
 
@@ -53,6 +66,7 @@ OPERATOR DB 1 DUP (?)
     RESUME:
     ;CONTINUE IF PIN IS ACCEPTED
     ;WAIT FOR PIN ENTRY
+    CALL PORT_SUCCESS
     CALL NEWLINE
     LEA DX , SUCCESS    ;LOAD SUCCESS MESSAGE TO DX
     CALL PRINT_STRING   ;CALL PRINT_STRING
@@ -78,6 +92,7 @@ OPERATOR DB 1 DUP (?)
     ;CHECK IS TEMP_PIN EQUAL PIN?                 
     RESUME2:
     CALL NEWLINE
+    CALL PORT_SUCCESS
     LEA DX , SUCCESS_PIN    ;LOAD SUCCESS_PIN TO DX 
     CALL PRINT_STRING       ;CALL PRINT_STRING
     CALL NEWLINE            ;CALL NEWLINE 
@@ -87,7 +102,7 @@ OPERATOR DB 1 DUP (?)
     CALL CREATE_CAPTCHA     ;CALL CREATE_CAPTCHA
                
     RESUME3:                ;RESUME TAG 
-    
+    CALL PORT_SUCCESS
     LEA DX , CAPTCHA_STRING     ;PRINT CAPTCHA QUESTION
     CALL PRINT_STRING           ;CALL PRINT STRING
     CALL NEWLINE                ;PRINT NEWLINE
@@ -129,13 +144,15 @@ OPERATOR DB 1 DUP (?)
     JE CORRECT;         ;JUMP IF EQUAL
     
     ;IF WRONG
+    CALL PORT_FAIL          ;OUTPUT FAIL
     LEA DX , CAPTCHA_FAILED ;LOAD FAIL STRING TO DX
     CALL PRINT_STRING
     CALL NEWLINE
     JMP RESUME3:
     
     CORRECT:
-    CALL NEWLINE
+    CALL PORT_SUCCESS           ;OUTPUT SUCCESS
+    CALL NEWLINE                ;CALL NEWLINE
     LEA DX , CAPTCHA_SUCCESS    ;CAPTCHA SUCCESS STRING
     CALL PRINT_STRING           
     CALL NEWLINE
@@ -248,7 +265,7 @@ RANDOMIZER ENDP
 
 CREATE_CAPTCHA PROC
     CAPTCHA_LOOP:
-        CALL RANDOMIZER ; RASTGELE SAYILARI VE OPERATÖRÜ YENIDEN ÜRET
+        CALL RANDOMIZER ; RASTGELE SAYILARI VE OPERATÃ–RÃœ YENIDEN ÃœRET
         
         ;USE RANDOM_NUMBERS
         ;USE OPERATOR 
@@ -328,9 +345,26 @@ CREATE_CAPTCHA PROC
     END_CAPTCHA: 
     JMP RESUME3
 
-CREATE_CAPTCHA ENDP
+CREATE_CAPTCHA ENDP 
 
 
+PORT_SUCCESS PROC  
+    MOV AL , 1
+    OUT 110 , AL
+    RET
+PORT_SUCCESS ENDP  
+
+PORT_FAIL PROC
+    MOV AL , 2
+    OUT 110 , AL
+    RET   
+PORT_FAIL ENDP
+
+PORT_DEFAULT PROC
+    MOV AL , 2
+    OUT 110 , AL
+    RET     
+PORT_DEFAULT ENDP
 
 
 END MAIN 
